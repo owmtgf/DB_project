@@ -13,7 +13,6 @@ def find_substring_indices(main_string, sub_string):
     for i in range(1, main_string_length + 1):
         prefix_hashes[i] = (prefix_hashes[i - 1] + ord(main_string[i - 1]) * powers_of_prime[i - 1]) % cut
         powers_of_prime[i] = (powers_of_prime[i - 1] * prime_number) % cut
-
     sub_string_hash = 0
     for i in range(sub_string_length):
         sub_string_hash = (sub_string_hash + ord(sub_string[i]) * powers_of_prime[i]) % cut
@@ -29,7 +28,11 @@ def find_substring_indices(main_string, sub_string):
 def find_all_elems(main_string, sub_string):
     sub_string = sub_string.split()
     for i in sub_string:
-        if not find_substring_indices(main_string, i):
+        try:
+            flag = find_substring_indices(main_string, i)
+        except:
+            flag = False
+        if not flag:
             return False
     return True
 

@@ -16,7 +16,7 @@ def GetText(entry_block):
 
 def UpdateLists():
     global dbs, tables, pg_connection, meta
-    dbs = pg_connection.execute(text("SELECT datname FROM pg_database;")).fetchall()
+    dbs = pg_connection.execute(text("SELECT * FROM get_all_dbs();")).fetchall()
     dbs = [i[0] for i in dbs]
     meta = MetaData()
     meta.reflect(bind=tab_engine)
@@ -57,6 +57,8 @@ def CreateDB(name):
     name = GetText(name)
     if name == '':
         messagebox.showerror('Ошибка', 'Вы не ввели имя базы данных.')
+    elif name in dbs:
+        messagebox.showerror('Ошибка', f'База данных с именем "{name}" уже существует.')
     else:
         pg_connection.execute(text(f"CREATE DATABASE {name}"))
         UpdateLists()
@@ -69,6 +71,8 @@ def DropDB(combobox):
     name = GetText(combobox)
     if name == '':
         messagebox.showerror('Ошибка', 'Вы не ввели имя базы данных.')
+    elif name == 'postgres':
+        messagebox.showerror('Ошибка', 'Базу данных невозможно удалить, ввиду ее использования в целях модерации.')
     else:
         pg_connection.execute((text(f"DROP DATABASE {name}")))
         pg_connection.commit()
@@ -86,8 +90,11 @@ def DeleteAllTablesFill():
 
 def CreateTableWindow(name):
     global dbs, tables
+    print(GetText(name))
     if GetText(name) == '':
         messagebox.showerror('Ошибка', 'Вы не ввели имя таблицы.')
+    elif GetText(name) in tables:
+        messagebox.showerror('Ошибка', f'Таблица с именем "{GetText(name)}" уже существует.')
     else:
         create_window = tk.Tk()
         create_window.geometry(f'575x450+100+50')
@@ -167,7 +174,7 @@ pg_engine = create_engine('postgresql://app_user:prikolist@localhost:1488/postgr
 pg_connection = pg_engine.connect()
 
 
-dbs = pg_connection.execute(text("SELECT datname FROM pg_database;")).fetchall()
+dbs = pg_connection.execute(text("SELECT get_all_dbs();")).fetchall()
 
 dbs = [i[0] for i in dbs]
 print(dbs)
@@ -180,9 +187,14 @@ tables = list(meta.tables.keys())
 print(tables)
 
 window = tk.Tk()
-window.geometry(f'500x200+100+50')
+
+screen_width = window.winfo_screenwidth()
+screen_height = window.winfo_screenheight()
+
+window.geometry(f'500x200+{screen_width//2-250}+{screen_height//2-100}')
 window.resizable(False, False)
-window.title('Харакири')
+window.title('Модерация')
+
 
 Window()
 

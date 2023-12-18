@@ -29,6 +29,14 @@ user_surname = ''
 status = ''
 
 
+def IsDigit(text):
+    try:
+        int(text)
+        return True
+    except:
+        return False
+
+
 def RefreshTable(is_selected=False):
     global items, indices
     selected_indices = [0, 1, 3, 4, 5]
@@ -253,41 +261,48 @@ def EditItem(tree):
 
 
 def ApplyChanges(key, edit_window, idx, tree, title, category, description, price, amount):
-    print('Apply', idx)
     new_values = [GetText(title), GetText(category), GetText(description), GetText(price), GetText(amount)]
-
-    if new_values[1] == 'default':
-        messagebox.showerror('Ошибка редактирования', 'Вы не указали категорию товара.')
+    new_values[0] = new_values[0].replace("'", '"')
+    new_values[2] = new_values[2].replace("'", '"').replace('\n', ' ')
+    desc = new_values[2]
+    while '  ' in desc:
+        desc = desc.replace('  ', ' ')
+    new_values[2] = desc
+    if ' ' in new_values or '' in new_values or '\n' in new_values:
+        messagebox.showerror('Ошибка редактирования', 'Заполните все поля.')
     else:
-        to_db = new_values.copy()
-        to_db.append(to_db[0].lower())
-        for value in range(len(to_db)):
-            to_db[value] = ReconType(to_db[value])
-
-        if '' not in new_values:
-            if key == 'w':
-                to_db = FormatForDB(to_db)
-                act.AddItem('products', to_db)
-                new_values = new_values[:1] + new_values[2:]
-                RefreshTable()
-                RefreshTable(True)
-                tree.insert('', tk.END, iid=f'{len(act.products)}', values=new_values)
-                if status:
-                    MainWindow()
-                else:
-                    UserWindow()
-
-            elif key == 'e':
-                index_from_db = indices[ParseIndex(idx)]
-                for_func = new_values.copy()
-                for_func.append(new_values[0].lower())
-                act.EditItem(index_from_db, for_func)
-                new_values = new_values[:1] + new_values[2:]
-                tree.item(idx, values=new_values)
-            RefreshTable()
-            edit_window.destroy()
+        if not IsDigit(new_values[3]) or not IsDigit(new_values[4]):
+            messagebox.showerror('Ошибка', 'Введите корректные значения цены и количества.')
         else:
-            messagebox.showerror('Ошибка редактирования', 'Заполните все поля.')
+            if new_values[1] == 'default':
+                messagebox.showerror('Ошибка редактирования', 'Вы не указали категорию товара.')
+            else:
+                to_db = new_values.copy()
+                to_db.append(to_db[0].lower())
+                for value in range(len(to_db)):
+                    to_db[value] = ReconType(to_db[value])
+
+                if key == 'w':
+                    to_db = FormatForDB(to_db)
+                    act.AddItem('products', to_db)
+                    new_values = new_values[:1] + new_values[2:]
+                    RefreshTable()
+                    RefreshTable(True)
+                    tree.insert('', tk.END, iid=f'{len(act.products)}', values=new_values)
+                    if status:
+                        MainWindow()
+                    else:
+                        UserWindow()
+
+                elif key == 'e':
+                    index_from_db = indices[ParseIndex(idx)]
+                    for_func = new_values.copy()
+                    for_func.append(new_values[0].lower())
+                    act.EditItem(index_from_db, for_func)
+                    new_values = new_values[:1] + new_values[2:]
+                    tree.item(idx, values=new_values)
+                RefreshTable()
+                edit_window.destroy()
 
 
 def DeleteCategory(tree, category='Full'):
@@ -309,7 +324,7 @@ def DeleteCategory(tree, category='Full'):
 def Bucket():
     global bucket_items
     bucket_window = tk.Tk()
-    bucket_window.geometry(f'700x500+{screen_width//2-350}+{screen_height//2-250}')
+    bucket_window.geometry(f'700x500+{screen_width // 2 - 350}+{screen_height // 2 - 250}')
     bucket_window.resizable(False, False)
     bucket_window.title('Корзина')
 
@@ -338,7 +353,8 @@ def Bucket():
 
     delete_item_btn = ttk.Button(frame_bucket, text='Удалить товар', width=15,
                                  command=lambda: DeleteItem(purchases, summary_entry, True))
-    order_btn = ttk.Button(frame_bucket, text='Оформить заказ', width=20, command=lambda: RegisterOrder(bucket_window, purchases))
+    order_btn = ttk.Button(frame_bucket, text='Оформить заказ', width=20,
+                           command=lambda: RegisterOrder(bucket_window, purchases))
 
     summary_label = tk.Label(frame_bucket, text='Сумма заказа:')
     summary_entry = tk.Entry(frame_bucket)
@@ -415,7 +431,8 @@ def CreateOrder(window, tree, item_amount, city_entry, street_entry, building_en
         bucket_items = []
         tree.delete(*tree.get_children())
 
-        messagebox.showinfo('Заказ оформлен', f'Товары доставят по адресу {city_entry}, {street_entry}, {building_entry}')
+        messagebox.showinfo('Заказ оформлен',
+                            f'Товары доставят по адресу {city_entry}, {street_entry}, {building_entry}')
 
         window.destroy()
         Bucket()
@@ -475,7 +492,7 @@ def RegisterOrder(bucket_window, purchases):
 def MyOrders():
     orders_window = tk.Tk()
     orders_window.title('Мои заказы')
-    orders_window.geometry(f'450x300+{screen_width//2-225}+{screen_height//2-150}')
+    orders_window.geometry(f'450x300+{screen_width // 2 - 225}+{screen_height // 2 - 150}')
     orders_window.resizable(False, False)
 
     orders_frame = tk.Frame(orders_window)
@@ -540,7 +557,7 @@ def Specialists(category):
     if category != 'Все':
         spec_window = tk.Tk()
         spec_window.title(f'Специалисты в категории "{category}"')
-        spec_window.geometry(f'400x300+{screen_width//2-200}+{screen_height//2-150}')
+        spec_window.geometry(f'400x300+{screen_width // 2 - 200}+{screen_height // 2 - 150}')
         spec_window.resizable(False, False)
 
         spec_frame = tk.Frame(spec_window)
@@ -572,6 +589,7 @@ def Specialists(category):
         spec_frame.columnconfigure(1, weight=1)
     else:
         messagebox.showerror('Ошибка', 'Сначала выберите категорию.')
+
 
 # ОКНО РАБОТНИКА -------------------------------------------------------------------------------------------------------
 
@@ -607,7 +625,7 @@ def MainWindow():
     tree.heading("amount", text="Кол-во", anchor=tk.W)
 
     tree.column("title", stretch=tk.NO, width=320)
-    tree.column("description", stretch=tk.NO, width=600)
+    tree.column("description", stretch=tk.NO, width=560)
     tree.column("price", stretch=tk.NO, width=50)
     tree.column("amount", stretch=tk.NO, width=50)
 
@@ -655,7 +673,8 @@ def MainWindow():
     show_button = ttk.Button(filter_frame, text='Показать', command=lambda: FirteredItems(tree, filter_entry))
     show_button.grid(row=2, column=0, sticky='ew')
 
-    delete_cat_button = ttk.Button(filter_frame, text='      Удалить все\nобъекты категории', command=lambda: DeleteCategory(tree, filter_entry))
+    delete_cat_button = ttk.Button(filter_frame, text='      Удалить все\nобъекты категории',
+                                   command=lambda: DeleteCategory(tree, filter_entry))
     delete_cat_button.grid(row=3, rowspan=2, column=0, sticky='ew', pady=20)
 
     delete_all_button = ttk.Button(filter_frame, text='Удалить все\n  элементы', command=lambda: DeleteCategory(tree))
